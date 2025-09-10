@@ -1,0 +1,38 @@
+name: Terraform AWS ETL Extended
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Run Checkov (Terraform Security Scan)
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: .
+
+      - name: Run Trivy (Vulnerability Scan)
+        uses: aquasecurity/trivy-action@0.12.0
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          path: .
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
